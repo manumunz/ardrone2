@@ -1,5 +1,6 @@
 package de.hhn.munz.ardrone2;
 
+import android.content.Intent;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -52,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
             Log.w(TAG, "Connection failed!");
         } else {
             Log.w(TAG, "Connection succeeded!");
-            // Switch to Control Intent
+
+            Intent intent = new Intent(this, ControlActivity.class);
+            this.startActivity(intent);
         }
     }
 }

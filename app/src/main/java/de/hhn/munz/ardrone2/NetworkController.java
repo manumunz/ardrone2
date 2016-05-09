@@ -20,10 +20,10 @@ public class NetworkController {
 
     private NetworkController () {
         try {
-            socket = new DatagramSocket();
             sequenceNumber = 0;
             keepAlive = true;
             this.keepAlive();
+            socket = new DatagramSocket();
         } catch (Exception e) {
             Log.w(TAG, e.getMessage());
         }
