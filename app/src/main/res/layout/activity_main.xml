@@ -12,41 +12,4 @@
         android:src="@drawable/lunar_sky"
         android:scaleType="centerCrop" />
 
-    <EditText
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/wifi_ssid"
-        android:alpha="0.6"
-        android:hint="WiFi SSID"
-        android:layout_centerVertical="true"
-        android:layout_alignEnd="@+id/wifi_key"
-        android:layout_alignStart="@+id/wifi_key"
-        android:textAlignment="center" />
-
-    <EditText
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPassword"
-        android:id="@+id/wifi_key"
-        android:alpha="0.6"
-        android:hint="WiFi Password"
-        android:layout_below="@+id/wifi_ssid"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:textAlignment="center" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Connect"
-        android:id="@+id/wifi_connect"
-        android:layout_alignParentBottom="true"
-        android:layout_alignStart="@+id/wifi_key"
-        android:layout_alignEnd="@+id/wifi_key"
-        android:layout_marginBottom="20dp"
-        android:alpha="0.6"
-        android:textStyle="bold"
-        android:onClick="onWiFiConnect" />
 </RelativeLayout>

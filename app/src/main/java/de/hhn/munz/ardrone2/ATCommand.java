@@ -18,11 +18,6 @@ public class ATCommand {
     }
 
     public static String move(float pitch, float roll, float gaz, float yaw) {
-        pitch = pitch == -0.0f ? 0.0f : pitch;
-        roll = roll == -0.0f ? 0.0f : roll;
-        gaz = gaz == -0.0f ? 0.0f : gaz;
-        yaw = yaw == -0.0f ? 0.0f : yaw;
-
         return "AT*PCMD=%d,1,"
                 + Float.floatToIntBits(pitch) + ","
                 + Float.floatToIntBits(roll) + ","

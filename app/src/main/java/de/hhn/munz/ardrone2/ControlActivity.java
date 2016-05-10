@@ -53,6 +53,9 @@ public class ControlActivity extends AppCompatActivity {
                         float gaz = (float) rightJoystickListener.getLastY() / 10f;
                         float yaw = (float) rightJoystickListener.getLastX() / -10f;
 
+                        roll = roll == -0.0f ? 0.0f : roll;
+                        yaw = yaw == -0.0f ? 0.0f : yaw;
+
                         controller.sendString(ATCommand.move(pitch, roll, gaz, yaw));
                     } catch (Exception e) {
                         Log.w(TAG, e.getMessage());
@@ -62,7 +65,9 @@ public class ControlActivity extends AppCompatActivity {
         }).start();
     }
 
-    public void disableLoop() {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
         isRunning = false;
     }
 
@@ -76,7 +81,7 @@ public class ControlActivity extends AppCompatActivity {
     }
 
     public void onClickEmergency(View view) {
-        disableLoop();
+        isRunning = false;
         sendCommand(ATCommand.emergencyReset());
     }
 
