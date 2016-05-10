@@ -11,6 +11,8 @@ import de.hhn.munz.ardrone2.util.OnJoystickMovedListener;
 public class ControlActivity extends AppCompatActivity {
     private static final String TAG = ".ControlActivity";
 
+    private static final float SPEED_FACTOR = 0.2f; // 0.0 to 1.0
+
     JoystickView leftJoystick;
     JoystickView rightJoystick;
 
@@ -38,26 +40,31 @@ public class ControlActivity extends AppCompatActivity {
         controller = NetworkController.getInstance();
     }
 
-    private void networkLoop() {
+    private void processMovement() {
         isRunning = true;
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (isRunning) {
+                if (isRunning) {
                     try {
-                        Thread.sleep(25);
-
-                        float pitch = (float) leftJoystickListener.getLastX() / 10f;
-                        float roll = (float) leftJoystickListener.getLastY() / -10f;
-                        float gaz = (float) rightJoystickListener.getLastY() / 10f;
-                        float yaw = (float) rightJoystickListener.getLastX() / -10f;
+                        float pitch = (float) leftJoystickListener.getLastX() / 10f * SPEED_FACTOR;
+                        float roll = (float) leftJoystickListener.getLastY() / -10f * SPEED_FACTOR;
+                        float gaz = (float) rightJoystickListener.getLastY() / 10f * SPEED_FACTOR;
+                        float yaw = (float) rightJoystickListener.getLastX() / -10f * SPEED_FACTOR;
 
                         roll = roll == -0.0f ? 0.0f : roll;
                         yaw = yaw == -0.0f ? 0.0f : yaw;
 
-                        controller.sendString(ATCommand.move(pitch, roll, gaz, yaw));
+                        controller.sendString(ATCommand.move(pitch, roll, gaz, yaw), true);
+
                     } catch (Exception e) {
+                        Log.w(TAG, e.getMessage());
+                    }
+
+                    try {
+                        Thread.sleep(5);
+                    } catch (InterruptedException e) {
                         Log.w(TAG, e.getMessage());
                     }
                 }
@@ -72,25 +79,24 @@ public class ControlActivity extends AppCompatActivity {
     }
 
     public void onClickLanding(View view) {
-        sendCommand(ATCommand.land());
+        sendCommand(ATCommand.land(), false);
     }
 
     public void onClickTakeOff(View view) {
-        sendCommand(ATCommand.takeOff());
-        networkLoop();
+        sendCommand(ATCommand.takeOff(), false);
     }
 
-    public void onClickEmergency(View view) {
+    public void onClickTrim(View view) {
         isRunning = false;
-        sendCommand(ATCommand.emergencyReset());
+        sendCommand(ATCommand.trim(), false);
     }
 
-    private void sendCommand(final String cmd) {
+    private void sendCommand(final String cmd, final boolean withRetries) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    controller.sendString(cmd);
+                    controller.sendString(cmd, withRetries);
                 } catch (Exception e) {
                     Log.w(TAG, e.getMessage());
                 }
@@ -118,6 +124,7 @@ public class ControlActivity extends AppCompatActivity {
         public void onMoved(int x, int y) {
             lastX = x;
             lastY = y;
+            processMovement();
         }
     }
 }

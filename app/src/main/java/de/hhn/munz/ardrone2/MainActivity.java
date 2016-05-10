@@ -12,8 +12,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -53,20 +55,23 @@ public class MainActivity extends AppCompatActivity {
         mainProgress.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         mainProgress.setCancelable(false);
 
-        mainProgress.show();
+        //mainProgress.show();
     }
 
     private void processNetworks(List<ScanResult> scanResults) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(new Date().toString()).append("\n");
         for (ScanResult scan : scanResults) {
+            builder.append(scan.SSID).append("\n");
             if (scan.SSID.toLowerCase().contains("ardrone2")) {
                 isRunning = false;
 
                 wifiConnect(scan.SSID);
-                isProcessing = false;
                 isRunning = false;
                 break;
             }
         }
+        ((TextView) findViewById(R.id.textView)).setText(builder.toString());
         isProcessing = false;
     }
 
@@ -84,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, e.getMessage());
                     }
                 }
-                mainProgress.dismiss();
+                //mainProgress.dismiss();
             }
         }).start();
     }

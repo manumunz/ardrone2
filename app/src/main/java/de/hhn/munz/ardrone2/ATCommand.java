@@ -61,7 +61,7 @@ public class ATCommand {
         return "AT*CONFIG=%d,\"control:altitude_max\",\""+millimeter+"\"\r";
     }
 
-    public static String emergencyReset() {
+    public static String trim() {
         return "AT*REF=%d,290717952\r";
     }
 }

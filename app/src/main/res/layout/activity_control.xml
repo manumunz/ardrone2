@@ -50,10 +50,10 @@
     <Button
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:text="Emergency"
-        android:id="@+id/btnEmergency"
+        android:text="Trim"
+        android:id="@+id/btnTrim"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:onClick="onClickEmergency" />
+        android:onClick="onClickTrim" />
 
 </RelativeLayout>
