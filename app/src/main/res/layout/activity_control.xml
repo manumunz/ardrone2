@@ -30,30 +30,38 @@
         android:layout_alignParentRight="true" />
 
     <Button
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:text="Take Off"
-        android:id="@+id/btnTakeOff"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:onClick="onClickTakeOff" />
-
-    <Button
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:text="Land"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:id="@+id/btnLanding"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:onClick="onClickLanding" />
+        android:onClick="onClickLanding"
+        android:background="@drawable/takeoff" />
 
     <Button
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:text="Trim"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:id="@+id/btnTrim"
+        android:onClick="onClickTrim"
+        android:background="@drawable/trim"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="onClickTrim" />
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/led"
+        android:src="@drawable/red_led"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WiFi"
+        android:id="@+id/textView"
+        android:layout_alignBottom="@+id/led"
+        android:layout_toStartOf="@+id/led"
+        android:layout_marginRight="5dp" />
 
 </RelativeLayout>

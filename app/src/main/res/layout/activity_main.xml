@@ -9,22 +9,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/background"
-        android:src="@drawable/lunar_sky"
+        android:src="@drawable/background_datastream"
         android:scaleType="centerCrop" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Searching WiFi Networks"
-        android:id="@+id/textView"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:textColor="#ffffff"
-        android:textSize="20dp"
-        android:scrollbars="vertical"
-        android:layout_margin="20dp" />
 
 </RelativeLayout>

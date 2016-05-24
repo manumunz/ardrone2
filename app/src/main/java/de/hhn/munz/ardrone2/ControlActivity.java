@@ -1,6 +1,9 @@
 package de.hhn.munz.ardrone2;
 
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +16,8 @@ public class ControlActivity extends AppCompatActivity {
 
     private static final float SPEED_FACTOR = 0.2f; // 0.0 to 1.0
 
+    WifiManager wifiManager;
+
     JoystickView leftJoystick;
     JoystickView rightJoystick;
 
@@ -22,11 +27,16 @@ public class ControlActivity extends AppCompatActivity {
     NetworkController controller;
 
     boolean isRunning;
+    boolean isFlying;
+    boolean wifiActive;
+    boolean checkWifi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_control);
+
+        wifiManager = (WifiManager)getSystemService(WIFI_SERVICE);
 
         leftJoystickListener = new JoystickListener();
         rightJoystickListener = new JoystickListener();
@@ -38,6 +48,38 @@ public class ControlActivity extends AppCompatActivity {
         rightJoystick.setOnJostickMovedListener(rightJoystickListener);
 
         controller = NetworkController.getInstance();
+        isFlying = false;
+        isRunning = true;
+        wifiActive = true;
+        checkWifi = true;
+
+        checkWiFi();
+    }
+
+    private void checkWiFi() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (checkWifi) {
+                    try {
+                        WifiInfo info = wifiManager.getConnectionInfo();
+                        if (info != null && info.getSSID().toLowerCase().contains("ardrone")) {
+                            if (!wifiActive) {
+                                findViewById(R.id.led).setBackground(ContextCompat.getDrawable(ControlActivity.this, R.drawable.green_led));
+                                wifiActive = true;
+                            }
+                        } else {
+                            findViewById(R.id.led).setBackground(ContextCompat.getDrawable(ControlActivity.this, R.drawable.red_led));
+                            wifiActive = false;
+                        }
+
+                        Thread.sleep(3000);
+                    } catch (Exception e) {
+                        Log.w(TAG, "CheckWiFi: " + e.getMessage());
+                    }
+                }
+            }
+        }).start();
     }
 
     private void processMovement() {
@@ -76,14 +118,19 @@ public class ControlActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         isRunning = false;
+        checkWifi = false;
     }
 
     public void onClickLanding(View view) {
-        sendCommand(ATCommand.land(), false);
-    }
-
-    public void onClickTakeOff(View view) {
-        sendCommand(ATCommand.takeOff(), false);
+        if (isFlying) {
+            sendCommand(ATCommand.land(), false);
+            findViewById(R.id.btnLanding).setBackground(ContextCompat.getDrawable(this, R.drawable.takeoff));
+        }
+        else {
+            sendCommand(ATCommand.takeOff(), false);
+            findViewById(R.id.btnLanding).setBackground(ContextCompat.getDrawable(this, R.drawable.land));
+        }
+        isFlying = !isFlying;
     }
 
     public void onClickTrim(View view) {

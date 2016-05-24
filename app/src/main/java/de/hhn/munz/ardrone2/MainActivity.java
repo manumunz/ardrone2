@@ -7,15 +7,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.WindowManager;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,6 +37,14 @@ public class MainActivity extends AppCompatActivity {
             wifiManager.setWifiEnabled(true);
         }
 
+        WifiInfo info = wifiManager.getConnectionInfo();
+        if (info != null && info.getSSID().toLowerCase().contains("ardrone")) {
+            Toast.makeText(this,"Connected to ArDrone WiFi",Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, ControlActivity.class);
+            this.startActivity(intent);
+            return;
+        }
+
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent intent) {
@@ -53,25 +60,19 @@ public class MainActivity extends AppCompatActivity {
         mainProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         mainProgress.setMessage("Searching ArDrone WiFi..");
         mainProgress.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        mainProgress.setCancelable(false);
+        mainProgress.setCancelable(true);
 
-        //mainProgress.show();
+        mainProgress.show();
     }
 
     private void processNetworks(List<ScanResult> scanResults) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(new Date().toString()).append("\n");
         for (ScanResult scan : scanResults) {
-            builder.append(scan.SSID).append("\n");
-            if (scan.SSID.toLowerCase().contains("ardrone2")) {
+            if (scan.SSID.toLowerCase().contains("ardrone")) {
                 isRunning = false;
-
                 wifiConnect(scan.SSID);
-                isRunning = false;
                 break;
             }
         }
-        ((TextView) findViewById(R.id.textView)).setText(builder.toString());
         isProcessing = false;
     }
 
@@ -89,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, e.getMessage());
                     }
                 }
-                //mainProgress.dismiss();
+                mainProgress.dismiss();
             }
         }).start();
     }
