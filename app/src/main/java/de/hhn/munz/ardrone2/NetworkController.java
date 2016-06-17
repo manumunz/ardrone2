@@ -36,7 +36,7 @@ public class NetworkController {
         return NetworkController.instance;
     }
 
-    public synchronized void sendString(String data, boolean withRetries) {
+    public synchronized void sendString(String data) {
         try {
             InetAddress IPAddress =  InetAddress.getByName(SERVER_HOST);
 
@@ -44,15 +44,8 @@ public class NetworkController {
 
             DatagramPacket packet = new DatagramPacket(bytes,bytes.length, IPAddress, SERVER_PORT);
 
-            if (!withRetries) {
-                socket.send(packet);
-                return;
-            }
+            socket.send(packet);
 
-            for (int i = 0; i < 10; i++) {
-                socket.send(packet);
-                Thread.sleep(5);
-            }
         } catch (Exception e) {
             Log.w(TAG, e.getMessage());
         }
@@ -64,7 +57,7 @@ public class NetworkController {
             public void run() {
                 while (keepAlive) {
                     try {
-                        sendString(ATCommand.keepAlive(), false);
+                        sendString(ATCommand.keepAlive());
                         Thread.sleep(100);
                     } catch (Exception e) {
                         Log.w(TAG, "KeepAlive: " + e.getMessage());

@@ -5,11 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.WindowManager;
@@ -17,7 +22,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnRequestPermissionsResultCallback {
     private static final String TAG = ".MainActivity";
     private boolean isRunning;
     private boolean isProcessing;
@@ -25,10 +30,20 @@ public class MainActivity extends AppCompatActivity {
 
     private ProgressDialog mainProgress;
 
+    private static int REQUEST_PERMISSIONS = 100;
+
+    private static String[] permissions = {
+            android.Manifest.permission.ACCESS_WIFI_STATE,
+            android.Manifest.permission.CHANGE_WIFI_STATE,
+            android.Manifest.permission.INTERNET
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        checkPermissions();
 
         wifiManager = (WifiManager)getSystemService(WIFI_SERVICE);
 
@@ -121,6 +136,27 @@ public class MainActivity extends AppCompatActivity {
 
             Intent intent = new Intent(this, ControlActivity.class);
             this.startActivity(intent);
+        }
+    }
+
+    private void checkPermissions() {
+        boolean check = false;
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this,
+                    permissions[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                check = true;
+            }
+        }
+        if (check) {
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_PERMISSIONS);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode != REQUEST_PERMISSIONS) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 }
