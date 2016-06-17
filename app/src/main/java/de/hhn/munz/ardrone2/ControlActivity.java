@@ -58,12 +58,14 @@ public class ControlActivity extends AppCompatActivity {
         wifiActive = true;
         checkWifi = true;
 
+        sendCommand("AT*CONFIG=%d,\"video:video_codec\",\"128\"\r");
+
         videoView = (VideoView) findViewById(R.id.videoView);
         videoView.requestFocus();
         videoView.setMediaController(new MediaController(this));
 
         try {
-            videoView.setVideoURI(Uri.parse("tcp:192.168.1.1:5555"));
+            videoView.setVideoURI(Uri.parse("http://192.168.1.1:5555"));
         }
         catch (Exception e) {}
 
@@ -82,7 +84,7 @@ public class ControlActivity extends AppCompatActivity {
                         }
                     } catch (Exception e) {
                         try {
-                            videoView.setVideoURI(Uri.parse("tcp:192.168.1.1:5555"));
+                            videoView.setVideoURI(Uri.parse("http://192.168.1.1:5555"));
                         }
                         catch (Exception e1) {}
                     }

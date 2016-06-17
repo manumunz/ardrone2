@@ -2,11 +2,11 @@ package de.hhn.munz.ardrone2;
 
 public class ATCommand {
     public static String keepAlive() {
-        return "AT*COMWDG=%d\r";
+        return "AT*COMWDG=1\r";
     }
 
     public static String hover() {
-        return "AT*PCMD=%d,1,0,0,0,0\r";
+        return "AT*PCMD=%d,0,0,0,0,0\r";
     }
 
     public static String land() {
@@ -16,6 +16,8 @@ public class ATCommand {
     public static String takeOff() {
         return "AT*REF=%d,290718208\r";
     }
+
+    public static String rotate() {return "AT*PCMD=%d,1,0,0,0,1061158912\r";}
 
     public static String move(float pitch, float roll, float gaz, float yaw) {
         return "AT*PCMD=%d,1,"

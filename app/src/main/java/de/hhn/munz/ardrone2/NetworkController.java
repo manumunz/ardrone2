@@ -38,6 +38,10 @@ public class NetworkController {
 
     public synchronized void sendString(String data) {
         try {
+            if (ATCommand.keepAlive().equals(data)) {
+                sequenceNumber = 0;
+            }
+
             InetAddress IPAddress =  InetAddress.getByName(SERVER_HOST);
 
             byte[] bytes = String.format(data,++sequenceNumber).getBytes();
@@ -58,7 +62,7 @@ public class NetworkController {
                 while (keepAlive) {
                     try {
                         sendString(ATCommand.keepAlive());
-                        Thread.sleep(100);
+                        Thread.sleep(30);
                     } catch (Exception e) {
                         Log.w(TAG, "KeepAlive: " + e.getMessage());
                     }
