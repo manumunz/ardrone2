@@ -1,23 +1,32 @@
 package de.hhn.munz.ardrone2;
 
-import android.net.Uri;
+import android.graphics.PixelFormat;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
-import android.widget.MediaController;
-import android.widget.VideoView;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+
+import java.io.IOException;
 
 import de.hhn.munz.ardrone2.util.JoystickView;
 import de.hhn.munz.ardrone2.util.OnJoystickMovedListener;
+import io.vov.vitamio.LibsChecker;
+import io.vov.vitamio.MediaPlayer;
 
-public class ControlActivity extends AppCompatActivity {
+public class ControlActivity extends AppCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnPreparedListener {
     private static final String TAG = ".ControlActivity";
 
-    private static final float SPEED_FACTOR = 0.2f; // 0.0 to 1.0
+    private static final float SPEED_MIN = 0.2f; // 0.0 to 1.0
+    private static final float SPEED_MAX = 1.0f;
+
+    private float speed;
 
     WifiManager wifiManager;
 
@@ -27,6 +36,8 @@ public class ControlActivity extends AppCompatActivity {
     JoystickListener leftJoystickListener;
     JoystickListener rightJoystickListener;
 
+    Switch speedSwitch;
+
     NetworkController controller;
 
     boolean isRunning;
@@ -34,14 +45,16 @@ public class ControlActivity extends AppCompatActivity {
     boolean wifiActive;
     boolean checkWifi;
 
-    VideoView videoView;
+    private MediaPlayer mMediaPlayer;
+    private SurfaceView mPreview;
+    private SurfaceHolder holder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_control);
 
-        wifiManager = (WifiManager)getSystemService(WIFI_SERVICE);
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
 
         leftJoystickListener = new JoystickListener();
         rightJoystickListener = new JoystickListener();
@@ -52,6 +65,15 @@ public class ControlActivity extends AppCompatActivity {
         rightJoystick = (JoystickView) findViewById(R.id.rightJoystick);
         rightJoystick.setOnJostickMovedListener(rightJoystickListener);
 
+        speed = SPEED_MIN;
+        speedSwitch = (Switch) findViewById(R.id.switch1);
+        speedSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                speed = isChecked ? SPEED_MAX : SPEED_MIN;
+            }
+        });
+
         controller = NetworkController.getInstance();
         isFlying = false;
         isRunning = true;
@@ -60,40 +82,16 @@ public class ControlActivity extends AppCompatActivity {
 
         sendCommand("AT*CONFIG=%d,\"video:video_codec\",\"128\"\r");
 
-        videoView = (VideoView) findViewById(R.id.videoView);
-        videoView.requestFocus();
-        videoView.setMediaController(new MediaController(this));
+        LibsChecker.checkVitamioLibs(this);
 
-        try {
-            videoView.setVideoURI(Uri.parse("http://192.168.1.1:5555"));
-        }
-        catch (Exception e) {}
+        mPreview = (SurfaceView) findViewById(R.id.videoView);
+        holder = mPreview.getHolder();
+        holder.addCallback(this);
+        holder.setFormat(PixelFormat.RGBA_8888);
 
-        getVideoStream();
         checkWiFi();
     }
 
-    private void getVideoStream() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (isRunning) {
-                    try {
-                        if (!videoView.isPlaying()) {
-                            videoView.start();
-                        }
-                    } catch (Exception e) {
-                        try {
-                            videoView.setVideoURI(Uri.parse("http://192.168.1.1:5555"));
-                        }
-                        catch (Exception e1) {}
-                    }
-                    try {
-                        Thread.sleep(4000);
-                    } catch (Exception e) {}
-                }
-            }}).start();
-    }
 
     private void checkWiFi() {
         new Thread(new Runnable() {
@@ -129,10 +127,10 @@ public class ControlActivity extends AppCompatActivity {
             public void run() {
                 if (isRunning) {
                     try {
-                        float pitch = (float) leftJoystickListener.getLastX() / 10f * SPEED_FACTOR;
-                        float roll = (float) leftJoystickListener.getLastY() / -10f * SPEED_FACTOR;
-                        float gaz = (float) rightJoystickListener.getLastY() / 10f * SPEED_FACTOR;
-                        float yaw = (float) rightJoystickListener.getLastX() / -10f * SPEED_FACTOR;
+                        float pitch = (float) leftJoystickListener.getLastX() / 10f * speed;
+                        float roll = (float) leftJoystickListener.getLastY() / -10f * speed;
+                        float gaz = (float) rightJoystickListener.getLastY() / 10f * speed;
+                        float yaw = (float) rightJoystickListener.getLastX() / 10f * speed;
 
                         roll = roll == -0.0f ? 0.0f : roll;
                         yaw = yaw == -0.0f ? 0.0f : yaw;
@@ -158,14 +156,36 @@ public class ControlActivity extends AppCompatActivity {
         super.onDestroy();
         isRunning = false;
         checkWifi = false;
+        if (mMediaPlayer != null)
+            mMediaPlayer.release();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mMediaPlayer != null) {
+            mMediaPlayer.release();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+        }
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        mMediaPlayer.start();
     }
 
     public void onClickLanding(View view) {
         if (isFlying) {
             sendCommand(ATCommand.land());
             findViewById(R.id.btnLanding).setBackground(ContextCompat.getDrawable(this, R.drawable.takeoff));
-        }
-        else {
+        } else {
             sendCommand(ATCommand.takeOff());
             findViewById(R.id.btnLanding).setBackground(ContextCompat.getDrawable(this, R.drawable.land));
         }
@@ -190,17 +210,41 @@ public class ControlActivity extends AppCompatActivity {
         }).start();
     }
 
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        mMediaPlayer = new MediaPlayer(this);
+        try {
+            mMediaPlayer.setDisplay(holder);
+            mMediaPlayer.setDataSource("tcp://192.168.1.1:5555/");
+            mMediaPlayer.setOnPreparedListener(this);
+            mMediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        // ignored
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        // ignored
+    }
+
     public class JoystickListener implements OnJoystickMovedListener {
         private int lastX = 0;
         private int lastY = 0;
 
-        public int getLastX() {
+        int getLastX() {
             if (lastX < -10 || lastX > 10)
                 return lastX = 0;
             return lastX;
         }
 
-        public int getLastY() {
+        int getLastY() {
             if (lastY < -10 || lastY > 10)
                 return lastY = 0;
             return lastY;

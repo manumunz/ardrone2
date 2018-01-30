@@ -5,5 +5,5 @@ package de.hhn.munz.ardrone2.util;
  * listening to the movement
  */
 public interface OnJoystickMovedListener {
-	void onMoved(int x, int y);
+    void onMoved(int x, int y);
 }

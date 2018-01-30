@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -24,19 +26,17 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnRequestPermissionsResultCallback {
     private static final String TAG = ".MainActivity";
-    private boolean isRunning;
-    private boolean isProcessing;
-    private WifiManager wifiManager;
-
-    private ProgressDialog mainProgress;
-
     private static int REQUEST_PERMISSIONS = 100;
-
     private static String[] permissions = {
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
             android.Manifest.permission.ACCESS_WIFI_STATE,
             android.Manifest.permission.CHANGE_WIFI_STATE,
             android.Manifest.permission.INTERNET
     };
+    private boolean isRunning;
+    private boolean isProcessing;
+    private WifiManager wifiManager;
+    private ProgressDialog mainProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
 
         checkPermissions();
 
-        wifiManager = (WifiManager)getSystemService(WIFI_SERVICE);
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
 
         // check WiFi enabled, if not enable it
         if (!wifiManager.isWifiEnabled()) {
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
 
         WifiInfo info = wifiManager.getConnectionInfo();
         if (info != null && info.getSSID().toLowerCase().contains("ardrone")) {
-            Toast.makeText(this,"Connected to ArDrone WiFi",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Connected to ArDrone WiFi", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, ControlActivity.class);
             this.startActivity(intent);
             return;
@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
                 processNetworks(wifiManager.getScanResults());
             }
         }, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-
         isRunning = true;
         isProcessing = false;
         runNetworkScan();
@@ -75,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
         mainProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         mainProgress.setMessage("Searching ArDrone WiFi..");
         mainProgress.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        mainProgress.setCancelable(true);
+        mainProgress.setCancelable(false);
 
         mainProgress.show();
     }
@@ -105,7 +104,6 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
                         Log.w(TAG, e.getMessage());
                     }
                 }
-                mainProgress.dismiss();
             }
         }).start();
     }
@@ -117,33 +115,62 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
     }
 
     private void wifiConnect(String ssid) {
+
         // WiFi setup with credentials
         WifiConfiguration wifiConfig = new WifiConfiguration();
         wifiConfig.SSID = String.format("\"%s\"", ssid);
         wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        wifiConfig.status = WifiConfiguration.Status.ENABLED;
+
 
         // Add ArDrone's WiFi to phone and connect
         int netId = wifiManager.addNetwork(wifiConfig);
+
+        wifiManager.saveConfiguration();
+
+        if (netId == -1) {
+            netId = getExistingNetworkId(wifiConfig.SSID);
+        }
+
         wifiManager.disconnect();
         wifiManager.enableNetwork(netId, true);
-        boolean success = wifiManager.reconnect();
+        wifiManager.reconnect();
 
-        if (!success) {
-            Toast.makeText(this,"Connection failed.",Toast.LENGTH_LONG).show();
-            Log.w(TAG, "Connection failed!");
-        } else {
-            Log.w(TAG, "Connection succeeded!");
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    //check if connected!
+                    while (!isConnected(MainActivity.this)) {
+                        //Wait to connect
+                        Thread.sleep(1000);
+                    }
 
-            Intent intent = new Intent(this, ControlActivity.class);
-            this.startActivity(intent);
-        }
+                    MainActivity.this.mainProgress.dismiss();
+
+                    Intent intent = new Intent(MainActivity.this, ControlActivity.class);
+                    MainActivity.this.startActivity(intent);
+
+                } catch (Exception e) {
+                    Log.e(".MainActivity", e.getMessage(), e);
+                }
+            }
+        };
+        t.start();
+    }
+
+    public boolean isConnected(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connectivityManager.getActiveNetworkInfo();
+
+        return mWifi != null && mWifi.getType() == ConnectivityManager.TYPE_WIFI && mWifi.isConnected();
     }
 
     private void checkPermissions() {
         boolean check = false;
-        for (int i = 0; i < permissions.length; i++) {
+        for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(this,
-                    permissions[i])
+                    permission)
                     != PackageManager.PERMISSION_GRANTED) {
                 check = true;
             }
@@ -158,5 +185,17 @@ public class MainActivity extends AppCompatActivity implements OnRequestPermissi
         if (requestCode != REQUEST_PERMISSIONS) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    private int getExistingNetworkId(String SSID) {
+        List<WifiConfiguration> configuredNetworks = wifiManager.getConfiguredNetworks();
+        if (configuredNetworks != null) {
+            for (WifiConfiguration existingConfig : configuredNetworks) {
+                if (SSID.equalsIgnoreCase(existingConfig.SSID)) {
+                    return existingConfig.networkId;
+                }
+            }
+        }
+        return -1;
     }
 }

@@ -6,7 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-public class NetworkController {
+class NetworkController {
     private static final String TAG = ".NetworkController";
 
     private static final String SERVER_HOST = "192.168.1.1";
@@ -18,7 +18,7 @@ public class NetworkController {
     private int sequenceNumber;
     private boolean keepAlive;
 
-    private NetworkController () {
+    private NetworkController() {
         try {
             sequenceNumber = 0;
             keepAlive = true;
@@ -29,24 +29,24 @@ public class NetworkController {
         }
     }
 
-    public static NetworkController getInstance() {
+    static NetworkController getInstance() {
         if (NetworkController.instance == null) {
             NetworkController.instance = new NetworkController();
         }
         return NetworkController.instance;
     }
 
-    public synchronized void sendString(String data) {
+    synchronized void sendString(String data) {
         try {
             if (ATCommand.keepAlive().equals(data)) {
                 sequenceNumber = 0;
             }
 
-            InetAddress IPAddress =  InetAddress.getByName(SERVER_HOST);
+            InetAddress IPAddress = InetAddress.getByName(SERVER_HOST);
 
-            byte[] bytes = String.format(data,++sequenceNumber).getBytes();
+            byte[] bytes = String.format(data, ++sequenceNumber).getBytes();
 
-            DatagramPacket packet = new DatagramPacket(bytes,bytes.length, IPAddress, SERVER_PORT);
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, IPAddress, SERVER_PORT);
 
             socket.send(packet);
 
@@ -69,24 +69,5 @@ public class NetworkController {
                 }
             }
         }).start();
-    }
-
-    public void closeConnection() {
-        keepAlive = false;
-        socket.close();
-        socket = null;
-    }
-
-    public void restartConnection() {
-        try {
-            if (!keepAlive) {
-                socket = new DatagramSocket();
-                sequenceNumber = 0;
-                keepAlive = true;
-                this.keepAlive();
-            }
-        } catch (Exception e) {
-            Log.w(TAG, e.getMessage());
-        }
     }
 }

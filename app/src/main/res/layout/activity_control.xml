@@ -9,7 +9,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="de.hhn.munz.ardrone2.ControlActivity">
 
-    <VideoView
+    <SurfaceView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/videoView"
@@ -70,5 +70,22 @@
         android:layout_alignBottom="@+id/led"
         android:layout_toStartOf="@+id/led"
         android:layout_marginRight="5dp" />
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView2"
+        android:layout_centerHorizontal="true"
+        android:checked="false"
+        android:scaleX="1"/>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/btnLanding"
+        android:layout_centerHorizontal="true"
+        android:text="Speed"/>
 
 </RelativeLayout>
